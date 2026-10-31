@@ -197,6 +197,11 @@
       100% { transform: scale(1) rotate(0deg); }
     }
     .chore-text { font-size: .88rem; font-weight: 800; flex: 1; }
+    .star-badge {
+      flex-shrink: 0; font-size: .72rem; font-weight: 800;
+      background: rgba(0,0,0,.07); border-radius: 20px;
+      padding: 3px 8px; color: var(--text-2);
+    }
 
     .star-float {
       position: absolute; right: 14px; top: 50%;
@@ -420,6 +425,8 @@ const CARD_COLORS = [
   { bg: '#FEF0E0', stroke: '#C2410C' },
 ];
 
+const PERIOD_STARS = { daily: 1, weekly: 2, monthly: 3, quarterly: 5 };
+
 const CHORES = {
   daily: [
     { id: 'make-bed',  text: 'Make the bed'         },
@@ -640,6 +647,7 @@ function renderChoreList() {
     item.className = 'chore-item' + (isDone?' done':'');
     item.dataset.id = chore.id;
     item.style.background = color.bg;
+    const sv = PERIOD_STARS[activeTab] || 1;
     item.innerHTML = `
       <svg class="star-cb${isDone?' checked':''}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="${STAR_PATH}"
@@ -648,6 +656,7 @@ function renderChoreList() {
           stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
       <span class="chore-text">${chore.text}</span>
+      ${sv > 1 ? `<span class="star-badge">+${sv} ⭐</span>` : ''}
     `;
     item.addEventListener('click', () => toggleChore(chore.id));
     list.appendChild(item);
@@ -666,15 +675,16 @@ function toggleChore(id) {
   const idx  = list.indexOf(id);
   const item = document.querySelector('.chore-item[data-id="'+id+'"]');
 
+  const starsVal = PERIOD_STARS[activeTab] || 1;
   if (idx === -1) {
     list.push(id);
-    state.totalStars++;
+    state.totalStars += starsVal;
     save();
 
     if (item) {
       const f = document.createElement('div');
       f.className = 'star-float';
-      f.innerHTML = `+1 <svg width="13" height="13" viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="#F59E0B" stroke="#D97706" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+      f.innerHTML = `+${starsVal} <svg width="13" height="13" viewBox="0 0 24 24"><path d="${STAR_PATH}" fill="#F59E0B" stroke="#D97706" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
       item.appendChild(f);
       setTimeout(() => f.remove(), 850);
     }
@@ -682,16 +692,19 @@ function toggleChore(id) {
     const el = document.getElementById('star-count');
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
 
-    const base = Math.floor((state.totalStars-1)/CYCLE)*CYCLE;
-    const hit  = MILESTONES.map(m=>base+m).find(m=>m===state.totalStars);
-    if (hit && !state.celebratedMilestones.includes(hit)) {
-      state.celebratedMilestones.push(hit);
-      save();
-      setTimeout(() => celebrate(hit), 550);
+    for (let s = state.totalStars - starsVal + 1; s <= state.totalStars; s++) {
+      const base = Math.floor((s-1)/CYCLE)*CYCLE;
+      const hit  = MILESTONES.map(m=>base+m).find(m=>m===s);
+      if (hit && !state.celebratedMilestones.includes(hit)) {
+        state.celebratedMilestones.push(hit);
+        save();
+        setTimeout(() => celebrate(hit), 550);
+        break;
+      }
     }
   } else {
     list.splice(idx, 1);
-    if (state.totalStars > 0) state.totalStars--;
+    state.totalStars = Math.max(0, state.totalStars - starsVal);
     save();
   }
   render();
@@ -701,7 +714,8 @@ function completeAll() {
   const chores = CHORES[activeTab];
   const list   = state.completedChores[activeTab];
   const before = state.totalStars;
-  chores.forEach(c => { if (!list.includes(c.id)) { list.push(c.id); state.totalStars++; } });
+  const starsVal = PERIOD_STARS[activeTab] || 1;
+  chores.forEach(c => { if (!list.includes(c.id)) { list.push(c.id); state.totalStars += starsVal; } });
   if (state.totalStars > before) {
     save();
     const el = document.getElementById('star-count');
