@@ -155,6 +155,7 @@
       border-radius: 99px; background: rgba(0,0,0,.06); color: var(--text-3);
     }
     .tab-btn.active .t-badge { background: rgba(255,255,255,.18); color: rgba(255,255,255,.8); }
+    .t-stars { font-size: .5rem; font-weight: 800; opacity: .55; letter-spacing: .01em; }
 
     /* ── Chore scroll ── */
     .chore-scroll {
@@ -197,11 +198,6 @@
       100% { transform: scale(1) rotate(0deg); }
     }
     .chore-text { font-size: .88rem; font-weight: 800; flex: 1; }
-    .star-badge {
-      flex-shrink: 0; font-size: .72rem; font-weight: 800;
-      background: rgba(0,0,0,.07); border-radius: 20px;
-      padding: 3px 8px; color: var(--text-2);
-    }
 
     .star-float {
       position: absolute; right: 14px; top: 50%;
@@ -351,13 +347,13 @@
         Daily<br><span class="t-badge" id="badge-daily">0/7</span>
       </button>
       <button class="tab-btn" onclick="switchTab('weekly')" id="tab-weekly">
-        Weekly<br><span class="t-badge" id="badge-weekly">0/11</span>
+        Weekly<br><span class="t-badge" id="badge-weekly">0/9</span><span class="t-stars">⭐ ×2</span>
       </button>
       <button class="tab-btn" onclick="switchTab('monthly')" id="tab-monthly">
-        Monthly<br><span class="t-badge" id="badge-monthly">0/8</span>
+        Monthly<br><span class="t-badge" id="badge-monthly">0/9</span><span class="t-stars">⭐ ×3</span>
       </button>
       <button class="tab-btn" onclick="switchTab('quarterly')" id="tab-quarterly">
-        Quarterly<br><span class="t-badge" id="badge-quarterly">0/8</span>
+        Quarterly<br><span class="t-badge" id="badge-quarterly">0/4</span><span class="t-stars">⭐ ×5</span>
       </button>
     </div>
   </div>
@@ -647,7 +643,6 @@ function renderChoreList() {
     item.className = 'chore-item' + (isDone?' done':'');
     item.dataset.id = chore.id;
     item.style.background = color.bg;
-    const sv = PERIOD_STARS[activeTab] || 1;
     item.innerHTML = `
       <svg class="star-cb${isDone?' checked':''}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="${STAR_PATH}"
@@ -656,7 +651,6 @@ function renderChoreList() {
           stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
       <span class="chore-text">${chore.text}</span>
-      ${sv > 1 ? `<span class="star-badge">+${sv} ⭐</span>` : ''}
     `;
     item.addEventListener('click', () => toggleChore(chore.id));
     list.appendChild(item);
