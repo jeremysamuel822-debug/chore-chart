@@ -343,17 +343,15 @@
   <!-- Tabs -->
   <div class="tabs-row">
     <div class="tabs-inner">
-      <button class="tab-btn active" onclick="switchTab('daily')" id="tab-daily">
-        Daily<br><span class="t-badge" id="badge-daily">0/7</span>
-      </button>
+      <button class="tab-btn active" onclick="switchTab('daily')" id="tab-daily">Daily</button>
       <button class="tab-btn" onclick="switchTab('weekly')" id="tab-weekly">
-        Weekly<br><span class="t-badge" id="badge-weekly">0/9</span><span class="t-stars">⭐ ×2</span>
+        Weekly<br><span class="t-stars">⭐ ×2</span>
       </button>
       <button class="tab-btn" onclick="switchTab('monthly')" id="tab-monthly">
-        Monthly<br><span class="t-badge" id="badge-monthly">0/9</span><span class="t-stars">⭐ ×3</span>
+        Monthly<br><span class="t-stars">⭐ ×3</span>
       </button>
       <button class="tab-btn" onclick="switchTab('quarterly')" id="tab-quarterly">
-        Quarterly<br><span class="t-badge" id="badge-quarterly">0/4</span><span class="t-stars">⭐ ×5</span>
+        Quarterly<br><span class="t-stars">⭐ ×5</span>
       </button>
     </div>
   </div>
@@ -574,7 +572,6 @@ function render() {
 
   renderRewardCards();
   renderChoreList();
-  renderBadges();
 }
 
 function renderRewardCards() {
@@ -657,12 +654,6 @@ function renderChoreList() {
   });
 }
 
-function renderBadges() {
-  ['daily','weekly','monthly','quarterly'].forEach(p => {
-    const el = document.getElementById('badge-'+p);
-    if (el) el.textContent = state.completedChores[p].length+'/'+CHORES[p].length;
-  });
-}
 
 function toggleChore(id) {
   const list = state.completedChores[activeTab];
