@@ -509,7 +509,7 @@ function load() {
   } catch(e) {}
 }
 
-function todayStr()   { return new Date().toISOString().slice(0,10); }
+function todayStr()   { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function weekStr()    { const d=new Date(); return d.getFullYear()+'-W'+Math.ceil((((d-new Date(d.getFullYear(),0,1))/86400000)+new Date(d.getFullYear(),0,1).getDay()+1)/7); }
 function monthStr()   { const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1); }
 function quarterStr() { const d=new Date(); return d.getFullYear()+'-Q'+(Math.floor(d.getMonth()/3)+1); }
@@ -576,8 +576,8 @@ function render() {
     ? 'Keep up the great work!'
     : allDone + ' chore' + (allDone!==1?'s':'') + ' done';
 
-  renderRewardCards();
-  renderChoreList();
+  try { renderRewardCards(); } catch(e) {}
+  try { renderChoreList();  } catch(e) {}
 }
 
 function renderRewardCards() {
