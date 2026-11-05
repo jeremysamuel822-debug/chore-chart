@@ -456,14 +456,14 @@ const SB_KEY = 'sb_publishable_rdJ1rUF9OhAAYo-8P-dvTw_ecRn3RDt';
 let myProfile   = localStorage.getItem('choreProfile') || null;
 let partnerData = null;
 
-function saveName() {
+async function saveName() {
   const name = document.getElementById('name-input').value.trim();
   if (!name) return;
   localStorage.setItem('choreProfile', name);
   myProfile = name;
   document.getElementById('name-overlay').classList.remove('show');
-  syncStars();
-  fetchPartnerStars();
+  await fetchPartnerStars(); // restore from Supabase first
+  syncStars();               // then push (now-correct) local count
 }
 
 async function syncStars() {
@@ -937,8 +937,7 @@ render();
 if (!myProfile) {
   document.getElementById('name-overlay').classList.add('show');
 } else {
-  syncStars();
-  fetchPartnerStars();
+  fetchPartnerStars().then(() => syncStars()); // restore first, then sync
 }
 setInterval(fetchPartnerStars, 60000);
 window.addEventListener('focus', fetchPartnerStars);
