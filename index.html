@@ -484,11 +484,18 @@ async function fetchPartnerStars() {
   if (!myProfile) return;
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/chore_household?id=neq.${encodeURIComponent(myProfile.toLowerCase())}`,
+      `${SB_URL}/rest/v1/chore_household`,
       { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
     );
     const data = await res.json();
-    partnerData = (Array.isArray(data) && data.length > 0) ? data[0] : null;
+    if (!Array.isArray(data)) return;
+    const myRow = data.find(r => r.id === myProfile.toLowerCase());
+    if (myRow && myRow.total_stars > state.totalStars) {
+      state.totalStars = myRow.total_stars;
+      save();
+      render();
+    }
+    partnerData = data.find(r => r.id !== myProfile.toLowerCase()) || null;
     renderPartnerBanner();
   } catch(e) {}
 }
