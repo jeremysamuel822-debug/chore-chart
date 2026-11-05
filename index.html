@@ -65,6 +65,29 @@
     @keyframes numPop { 0%,100%{transform:scale(1)} 45%{transform:scale(1.45)} }
     .star-pill .lbl { font-size: .58rem; font-weight: 800; color: var(--text-3); letter-spacing: .07em; text-transform: uppercase; }
 
+    /* ── Partner banner ── */
+    .partner-banner {
+      flex-shrink: 0; display: flex; gap: 8px; padding: 0 22px 10px;
+    }
+    .partner-banner.hidden { display: none; }
+    .p-card {
+      flex: 1; background: var(--surface); border-radius: 14px;
+      padding: 10px 12px; box-shadow: var(--shadow-xs);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .p-card.is-me { border: 2px solid var(--indigo); }
+    .p-card-name  { font-size: .65rem; font-weight: 800; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+    .p-card-stars { font-size: .95rem; font-weight: 900; color: var(--text); line-height: 1.1; }
+
+    /* ── Name input ── */
+    .name-input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+      padding: 13px 14px; font-family: inherit; font-size: 1rem; font-weight: 700;
+      color: var(--text); outline: none; background: var(--bg);
+      transition: border-color .18s; margin-bottom: 14px; text-align: center;
+    }
+    .name-input:focus { border-color: var(--dark); background: var(--surface); }
+
     /* ── Next reward dark card ── */
     .reward-card-strip { flex-shrink: 0; padding: 6px 22px 14px; }
     .next-reward-card {
@@ -312,6 +335,9 @@
     </div>
   </div>
 
+  <!-- Partner banner -->
+  <div class="partner-banner hidden" id="partner-banner"></div>
+
   <!-- Next reward card -->
   <div class="reward-card-strip">
     <div class="next-reward-card">
@@ -394,6 +420,20 @@
   </div>
 </div>
 
+<!-- Name setup modal -->
+<div class="overlay" id="name-overlay">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <span class="modal-icon">👋</span>
+    <div class="modal-title">Who are you?</div>
+    <div class="modal-sub">So your partner can see your star count</div>
+    <input class="name-input" id="name-input" type="text" placeholder="Your first name" maxlength="20">
+    <div class="edit-btns">
+      <button class="btn-primary" onclick="saveName()">Let's go!</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm reset modal -->
 <div class="overlay" id="confirm-overlay" onclick="closeConfirmReset()">
   <div class="modal" onclick="event.stopPropagation()">
@@ -410,6 +450,70 @@
 
 <script>
 const STAR_PATH = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
+
+const SB_URL = 'https://gzbvfpdujykzksztpmge.supabase.co';
+const SB_KEY = 'sb_publishable_rdJ1rUF9OhAAYo-8P-dvTw_ecRn3RDt';
+let myProfile   = localStorage.getItem('choreProfile') || null;
+let partnerData = null;
+
+function saveName() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) return;
+  localStorage.setItem('choreProfile', name);
+  myProfile = name;
+  document.getElementById('name-overlay').classList.remove('show');
+  syncStars();
+  fetchPartnerStars();
+}
+
+async function syncStars() {
+  if (!myProfile) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/chore_household`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ id: myProfile.toLowerCase(), name: myProfile, total_stars: state.totalStars, updated_at: new Date().toISOString() })
+    });
+  } catch(e) {}
+}
+
+async function fetchPartnerStars() {
+  if (!myProfile) return;
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/chore_household?id=neq.${encodeURIComponent(myProfile.toLowerCase())}`,
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
+    );
+    const data = await res.json();
+    partnerData = (Array.isArray(data) && data.length > 0) ? data[0] : null;
+    renderPartnerBanner();
+  } catch(e) {}
+}
+
+function renderPartnerBanner() {
+  if (!myProfile) return;
+  const banner = document.getElementById('partner-banner');
+  banner.classList.remove('hidden');
+  const pName  = partnerData ? partnerData.name : 'Partner';
+  const pStars = partnerData ? partnerData.total_stars : '—';
+  banner.innerHTML = `
+    <div class="p-card is-me">
+      <div>
+        <div class="p-card-name">${myProfile}</div>
+        <div class="p-card-stars">${state.totalStars} ⭐</div>
+      </div>
+    </div>
+    <div class="p-card">
+      <div>
+        <div class="p-card-name">${pName}</div>
+        <div class="p-card-stars">${pStars} ⭐</div>
+      </div>
+    </div>
+  `;
+}
 
 const CARD_COLORS = [
   { bg: '#FDFDE0', stroke: '#A16207' },
@@ -575,8 +679,9 @@ function render() {
     ? 'Keep up the great work!'
     : allDone + ' chore' + (allDone!==1?'s':'') + ' done';
 
-  try { renderRewardCards(); } catch(e) {}
-  try { renderChoreList();  } catch(e) {}
+  try { renderRewardCards();   } catch(e) {}
+  try { renderChoreList();    } catch(e) {}
+  try { renderPartnerBanner(); } catch(e) {}
 }
 
 function renderRewardCards() {
@@ -697,6 +802,7 @@ function toggleChore(id) {
     state.totalStars = Math.max(0, state.totalStars - starsVal);
     save();
   }
+  syncStars();
   render();
 }
 
@@ -721,6 +827,7 @@ function completeAll() {
     }
     save();
   }
+  syncStars();
   render();
 }
 
@@ -819,6 +926,15 @@ load();
 checkAutoReset();
 pruneStaleIds();
 render();
+
+if (!myProfile) {
+  document.getElementById('name-overlay').classList.add('show');
+} else {
+  syncStars();
+  fetchPartnerStars();
+}
+setInterval(fetchPartnerStars, 60000);
+window.addEventListener('focus', fetchPartnerStars);
 </script>
 </body>
 </html>
